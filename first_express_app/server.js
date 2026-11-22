@@ -1,5 +1,5 @@
 import express from "express";
-const app=express();
+const app=express();`r`n`r`napp.get("/", (req, res) => { res.send("Welcome to Products API!"); });
 //middleware
 app.use(express.json());
 const Products=[];
@@ -47,4 +47,5 @@ app.delete("/products/:id",(req,res)=>{
     }
 });
 export default app;
+
 
