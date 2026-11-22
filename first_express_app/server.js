@@ -1,51 +1,143 @@
-import express from "express";
-const app=express();`r`n`r`napp.get("/", (req, res) => { res.send("Welcome to Products API!"); });
-//middleware
+﻿import express from "express";
+
+const app = express();
+
 app.use(express.json());
-const Products=[];
-//create a new product-POST http://localhost:5000/Products playload:{id:1,name:"laptop",price:50000}
-app.post("/Products ",(req,res)=>{
-    const newProduct=req.body;
-    Products.push(newProduct);
-    res.status(200).json({message: "Product created Successfully ",data:newProduct});
+
+// Temporary in-memory product storage
+const Products = [];
+
+// Homepage
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "Welcome to Products API!",
+        endpoints: [
+            "GET /products",
+            "POST /products",
+            "GET /products/:id",
+            "PUT /products/:id",
+            "DELETE /products/:id"
+        ]
+    });
 });
-//read all products-GET http://localhost:5000/Products
-app.get("/Products ",(req,res)=>{
-    res.status(200).json({message:"All Products fetched Successfully",data:Products});
-});
-//read a product by ID - GET http://localhost:5000/Products/:id
-app.get("/Products/:id",(req,res)=>{
-    const ProductId=parseInt(req.params.id);
-    const Product=Products.find((prod)=>prod.id===ProductId);
-    if(Product){
-        res.status(200).json({message:"Product details fetched Successfully ",data:Product});
-    }else{
-        res.status(404).json({message:"Product not found"});
+
+// Create product
+app.post("/products", (req, res) => {
+    const newProduct = req.body;
+
+    if (!newProduct.id || !newProduct.name || newProduct.price === undefined) {
+        return res.status(400).json({
+            message: "Please provide id, name and price"
+        });
     }
-});
-//Update a product by ID - PUT http://localhost:5000/Products/:id playload:{id:1,name:"laptop,price:60000"}
-app.put("/product/:id",(req,res)=>{
-    const ProductId=parseInt(req.params.id);
-    const updateData=req.body;
-    const productIndex=Products.findIndex((prod)=>prod.id===ProductId);
-    if(productIndex!==-1){
-        Products[productIndex]={...Products[productIndex],...updateData};
-        res.status(200).json({message:"product updated successfully",data:Products[productIndex]});
-    }else{
-        response.status(404).json({message:"product not found"});
+
+    const existingProduct = Products.find(
+        (product) => product.id === Number(newProduct.id)
+    );
+
+    if (existingProduct) {
+        return res.status(409).json({
+            message: "Product ID already exists"
+        });
     }
+
+    const product = {
+        ...newProduct,
+        id: Number(newProduct.id)
+    };
+
+    Products.push(product);
+
+    res.status(201).json({
+        message: "Product created successfully",
+        data: product
+    });
 });
-//delete a product by ID - DELETE http://localhost:5000/Products/:id
-app.delete("/products/:id",(req,res)=>{
-    const ProductId=parseInt(req.params.id);
-    const productIndex=Products.findIndex((prod)=>prod.id===ProductId);
-    if(productIndex!==-1){
-        const delteProducts=Products.splice(productIndex,1);
-        res.status(200).json({message:"Product deleted Succcessfully ",data:delteProducts[0]});
-    }else{
-        res.status(404).json({message:"Product not found"});
+
+// Get all products
+app.get("/products", (req, res) => {
+    res.status(200).json({
+        message: "All products fetched successfully",
+        data: Products
+    });
+});
+
+// Get product by ID
+app.get("/products/:id", (req, res) => {
+    const productId = Number(req.params.id);
+
+    const product = Products.find(
+        (item) => item.id === productId
+    );
+
+    if (!product) {
+        return res.status(404).json({
+            message: "Product not found"
+        });
     }
+
+    res.status(200).json({
+        message: "Product details fetched successfully",
+        data: product
+    });
 });
+
+// Update product
+app.put("/products/:id", (req, res) => {
+    const productId = Number(req.params.id);
+
+    const productIndex = Products.findIndex(
+        (item) => item.id === productId
+    );
+
+    if (productIndex === -1) {
+        return res.status(404).json({
+            message: "Product not found"
+        });
+    }
+
+    Products[productIndex] = {
+        ...Products[productIndex],
+        ...req.body,
+        id: productId
+    };
+
+    res.status(200).json({
+        message: "Product updated successfully",
+        data: Products[productIndex]
+    });
+});
+
+// Delete product
+app.delete("/products/:id", (req, res) => {
+    const productId = Number(req.params.id);
+
+    const productIndex = Products.findIndex(
+        (item) => item.id === productId
+    );
+
+    if (productIndex === -1) {
+        return res.status(404).json({
+            message: "Product not found"
+        });
+    }
+
+    const deletedProduct = Products.splice(productIndex, 1);
+
+    res.status(200).json({
+        message: "Product deleted successfully",
+        data: deletedProduct[0]
+    });
+});
+
+// Local development server
+if (process.env.VERCEL !== "1") {
+    const PORT = process.env.PORT || 5000;
+
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+    });
+}
+
+// Export Express app for Vercel
 export default app;
-
-
