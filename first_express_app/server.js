@@ -46,6 +46,5 @@ app.delete("/products/:id",(req,res)=>{
         res.status(404).json({message:"Product not found"});
     }
 });
-server.listen(5000, () => {
-  console.log('Server running at http://localhost:5000/');
-});
+export default app;
+
